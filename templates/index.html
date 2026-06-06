@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antigravity Todo — Stay Organised</title>
+  <meta name="description" content="A beautiful, drag-and-drop todo list app built with Python and Flask." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- SortableJS CDN for drag-and-drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- Background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <div class="app-shell">
+
+    <!-- ── Header ─────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <span class="brand-name">Antigravity <span class="brand-accent">Todo</span></span>
+      </div>
+      <div class="header-stats">
+        <span id="stats-label" class="stats-label">0 tasks remaining</span>
+      </div>
+    </header>
+
+    <!-- ── Add Form ────────────────────────────────────── -->
+    <section class="add-section" aria-label="Add new task">
+      <form id="add-form" class="add-form" autocomplete="off">
+        <div class="input-row">
+          <input
+            id="todo-input"
+            type="text"
+            class="todo-input"
+            placeholder="Add a new task…"
+            maxlength="300"
+            required
+            aria-label="Task title"
+          />
+          <button id="add-btn" type="submit" class="btn btn-add" aria-label="Add task">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add</span>
+          </button>
+        </div>
+        <div class="meta-row">
+          <div class="meta-group">
+            <label for="priority-select" class="meta-label">Priority</label>
+            <select id="priority-select" class="meta-select" aria-label="Priority">
+              <option value="low">🟢 Low</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+          </div>
+          <div class="meta-group">
+            <label for="due-date-input" class="meta-label">Due date</label>
+            <input id="due-date-input" type="date" class="meta-select" aria-label="Due date" />
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ── Filter / Sort bar ──────────────────────────── -->
+    <div class="controls-bar">
+      <div class="filter-tabs" role="tablist" aria-label="Filter tasks">
+        <button id="filter-all"       class="filter-tab active" data-filter="all"       role="tab" aria-selected="true">All</button>
+        <button id="filter-active"    class="filter-tab"        data-filter="active"    role="tab" aria-selected="false">Active</button>
+        <button id="filter-completed" class="filter-tab"        data-filter="completed" role="tab" aria-selected="false">Done</button>
+      </div>
+      <div class="sort-group">
+        <label for="sort-select" class="meta-label">Sort</label>
+        <select id="sort-select" class="meta-select sort-select" aria-label="Sort tasks">
+          <option value="position">Custom order</option>
+          <option value="priority">Priority</option>
+          <option value="due_date">Due date</option>
+          <option value="created_at">Created</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ── Todo List ───────────────────────────────────── -->
+    <main>
+      <ul id="todo-list" class="todo-list" aria-label="Task list" aria-live="polite">
+        <!-- populated by app.js -->
+      </ul>
+      <div id="empty-state" class="empty-state hidden" aria-hidden="true">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            <path d="M3 17h4m0 0v4m0-4H3v4"/>
+          </svg>
+        </div>
+        <p class="empty-title">All clear!</p>
+        <p class="empty-sub">Add a task above to get started.</p>
+      </div>
+    </main>
+
+    <!-- ── Footer ─────────────────────────────────────── -->
+    <footer class="app-footer">
+      <button id="clear-completed-btn" class="btn btn-ghost" aria-label="Clear completed tasks">Clear completed</button>
+      <span class="footer-note">Drag tasks to reorder ↕</span>
+    </footer>
+
+  </div>
+
+  <!-- Edit modal -->
+  <div id="edit-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <h2 id="modal-title" class="modal-title">Edit Task</h2>
+      <input id="edit-input" type="text" class="todo-input" maxlength="300" placeholder="Task title…" aria-label="Edit task title" />
+      <div class="meta-row" style="margin-top:14px">
+        <div class="meta-group">
+          <label for="edit-priority" class="meta-label">Priority</label>
+          <select id="edit-priority" class="meta-select" aria-label="Edit priority">
+            <option value="low">🟢 Low</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+        </div>
+        <div class="meta-group">
+          <label for="edit-due-date" class="meta-label">Due date</label>
+          <input id="edit-due-date" type="date" class="meta-select" aria-label="Edit due date" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-ghost" aria-label="Cancel edit">Cancel</button>
+        <button id="modal-save"   class="btn btn-add"   aria-label="Save changes">Save changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
