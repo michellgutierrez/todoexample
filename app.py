@@ -6,8 +6,13 @@ import os
 # Inicialización de la aplicación Flask
 app = Flask(__name__)
 
-# Configuración de la base de datos SQLite (se creará un archivo 'todos.db' dentro de la carpeta 'instance')
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///todos.db"
+# Configuración de la base de datos (dinámica: local SQLite o PostgreSQL remoto para Railway/Supabase)
+db_url = os.environ.get("DATABASE_URL", "sqlite:///todos.db")
+# Solución de compatibilidad para SQLAlchemy: cambiar 'postgres://' a 'postgresql://' si aplica
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Inicialización de SQLAlchemy para manejar el ORM (mapeo objeto-relacional)
