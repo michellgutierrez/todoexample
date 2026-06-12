@@ -78,13 +78,15 @@ try:
     with app.app_context():
         db.create_all()
 except Exception as e:
+    import sys
     import traceback
-    print("\n" + "="*80)
-    print("!!! ERROR CRÍTICO AL CONECTAR A LA BASE DE DATOS !!!")
-    print(f"Detalle del error: {e}")
-    print("="*80 + "\n")
-    traceback.print_exc()
-    print("="*80 + "\n")
+    sys.stderr.write("\n" + "="*80 + "\n")
+    sys.stderr.write("!!! ERROR CRÍTICO AL CONECTAR A LA BASE DE DATOS !!!\n")
+    sys.stderr.write(f"Detalle del error: {e}\n")
+    sys.stderr.write("="*80 + "\n")
+    traceback.print_exc(file=sys.stderr)
+    sys.stderr.write("="*80 + "\n")
+    sys.stderr.flush()
     raise e
 
 
