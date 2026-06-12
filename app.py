@@ -17,6 +17,18 @@ elif db_url.startswith("postgresql://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Configurar SSL para conexiones a PostgreSQL (requerido por Supabase)
+if not db_url.startswith("sqlite"):
+    import ssl
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": {
+            "ssl_context": ssl_context
+        }
+    }
+
 # Inicialización de SQLAlchemy para manejar el ORM (mapeo objeto-relacional)
 db = SQLAlchemy(app)
 
