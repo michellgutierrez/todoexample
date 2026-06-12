@@ -8,11 +8,28 @@ app = Flask(__name__)
 
 # Configuración de la base de datos (dinámica: local SQLite o PostgreSQL remoto para Railway/Supabase)
 db_url = os.environ.get("DATABASE_URL", "sqlite:///todos.db")
+
 # Solución de compatibilidad para SQLAlchemy: usar pg8000 para evitar dependencias de C (libpq.so.5)
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+pg8000://", 1)
 elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+
+# Corregir de forma automática contraseñas con caracteres especiales (URL encode)
+if not db_url.startswith("sqlite"):
+    try:
+        from urllib.parse import urlparse, quote_plus, urlunparse
+        parsed = urlparse(db_url)
+        if parsed.password:
+            encoded_password = quote_plus(parsed.password)
+            username = parsed.username or ""
+            hostname = parsed.hostname or ""
+            port = f":{parsed.port}" if parsed.port else ""
+            netloc = f"{username}:{encoded_password}@{hostname}{port}"
+            parsed = parsed._replace(netloc=netloc)
+            db_url = urlunparse(parsed)
+    except Exception as e:
+        print(f"[DB] Error parsing/encoding database URL: {e}")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -57,8 +74,18 @@ class Todo(db.Model):
 
 
 # Crea las tablas en la base de datos si aún no existen
-with app.app_context():
-    db.create_all()
+try:
+    with app.app_context():
+        db.create_all()
+except Exception as e:
+    import traceback
+    print("\n" + "="*80)
+    print("!!! ERROR CRÍTICO AL CONECTAR A LA BASE DE DATOS !!!")
+    print(f"Detalle del error: {e}")
+    print("="*80 + "\n")
+    traceback.print_exc()
+    print("="*80 + "\n")
+    raise e
 
 
 # ── Páginas (Rutas de Plantilla HTML) ────────────────────────────────────────
