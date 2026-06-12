@@ -8,9 +8,11 @@ app = Flask(__name__)
 
 # Configuración de la base de datos (dinámica: local SQLite o PostgreSQL remoto para Railway/Supabase)
 db_url = os.environ.get("DATABASE_URL", "sqlite:///todos.db")
-# Solución de compatibilidad para SQLAlchemy: cambiar 'postgres://' a 'postgresql://' si aplica
+# Solución de compatibilidad para SQLAlchemy: usar pg8000 para evitar dependencias de C (libpq.so.5)
 if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = db_url.replace("postgres://", "postgresql+pg8000://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
